@@ -10,8 +10,10 @@
 
 #define SPEC_TRG         A0
 #define SPEC_ST          A1
-#define SPEC_CLK         10
+#define SPEC_CLK         A2
 #define SPEC_VIDEO       A3
+#define WHITE_LED        A4
+#define LASER_404        A5
 
 #if defined(CORE_TEENSY)
 #define FLASH_TRIGGER    12
@@ -26,6 +28,8 @@ SerialCommand sCmd(Serial);// the SerialCommand parser object
 void setup(){
   #if defined(CORE_TEENSY)
   pinMode(FLASH_TRIGGER,OUTPUT);
+  pinMode(WHITE_LED,OUTPUT);
+  pinMode(LASER_404,OUTPUT);
   digitalWrite(FLASH_TRIGGER,LOW);
   #endif
   Serial.begin(115200); // Baud Rate set to 115200
@@ -34,6 +38,10 @@ void setup(){
   sCmd.addCommand("SPEC.INTEG", SPEC_INTEG_sCmd_config_handler);     //configures integration time
   sCmd.addCommand("SPEC.READ?", SPEC_READ_sCmd_query_handler);       //reads out the whole spectrum
   sCmd.addCommand("SPEC.TIMING?", SPEC_TIMING_sCmd_query_handler);   //reads out timings
+  sCmd.addCommand("LED.START", LED_START_sCmd_query_handler);   //turn on led
+  sCmd.addCommand("LED.STOP", LED_STOP_sCmd_query_handler);   //turn off led
+  sCmd.addCommand("LASER.START", LASER_START_sCmd_query_handler);   //turn on laser
+  sCmd.addCommand("LASER.STOP", LASER_STOP_sCmd_query_handler);   //turn off laser
   #if defined(CORE_TEENSY)
   sCmd.addCommand("FLASH.TIMER_ONCE!", FLASH_TIMER_ONCE_sCmd_action_handler); //set flash to trigger on microsecond delay
   #endif
@@ -91,6 +99,19 @@ void SPEC_TIMING_sCmd_query_handler(SerialCommand this_sCmd){
   }
   this_sCmd.print(spec.get_timing(9));
   this_sCmd.print("\n");
+}
+
+void LED_START_sCmd_query_handler(SerialCommand this_sCmd){
+  digitalWrite(WHITE_LED,HIGH);
+}
+void LED_STOP_sCmd_query_handler(SerialCommand this_sCmd){
+  digitalWrite(WHITE_LED,LOW);
+}
+void LASER_START_sCmd_query_handler(SerialCommand this_sCmd){
+  digitalWrite(LASER_404,HIGH);
+}
+void LASER_STOP_sCmd_query_handler(SerialCommand this_sCmd){
+  digitalWrite(LASER_404,LOW);
 }
 
 #if defined(CORE_TEENSY)

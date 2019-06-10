@@ -22,7 +22,7 @@
  * along with this library.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "SerialCommand.h"
-#define SERIALCOMMAND_DEBUG
+// #define SERIALCOMMAND_DEBUG
 
 /**
  * Constructor makes sure some things are set.
@@ -132,7 +132,7 @@ void SerialCommand::runCommand() {
  */
 int SerialCommand::readSerial() {
   #ifdef SERIALCOMMAND_DEBUG
-  DEBUG_PORT.println("in SerialCommand::readSerial()");
+  /* DEBUG_PORT.println("in SerialCommand::readSerial()"); */
   #endif
   while (_port.available() > 0) {
     char inChar = _port.read();   // Read single available character, there may be more waiting
