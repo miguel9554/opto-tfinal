@@ -1,0 +1,3 @@
+laser continuo son los laseres de mano (uno de nd-yg y otro laser)
+medicion uv es el laser de la placa
+medicioni es la medicion i-esima del laser (el nd-yg de mesa)

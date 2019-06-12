@@ -19,25 +19,19 @@ class MicroSpec(object):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        exit('cantidad de argumentos invalida')
-
-    delimiter='\t'
-    filename = sys.argv[1]
-
     DATASET_NAME = "OPTOELECTRONICA 2019"
     mpl.rcParams["savefig.directory"] = os.path.dirname(__file__)
 
     spec = MicroSpec('/dev/ttyACM0')
-    icc = spec.set_integration_time(1)
-    time.sleep(1)   # si no se espera, el programa nunca le escribe al arduino y no anda
-    sdata, tdata = spec.read()
+    while True:
 
-    frequency = linspace(340,850, len(sdata))
-    plot(frequency, sdata)
-    title(DATASET_NAME)
-    show()
+        icc = spec.set_integration_time(1e-6)
+        time.sleep(1)   # si no se espera, el programa nunca le escribe al arduino y no anda
+        sdata, tdata = spec.read()
 
-    with open(filename, 'w') as fp:
-        for idx in range(len(frequency)):
-            fp.write("{f}{d}{s}\n".format(f=frequency[idx], d=delimiter, s=sdata[idx]))
+        frequency = linspace(340,850, len(sdata))
+        clf()
+        plot(frequency, sdata)
+        title(DATASET_NAME)
+        show(block=False)
+        pause(0.05)
