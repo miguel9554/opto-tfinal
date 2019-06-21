@@ -1,6 +1,7 @@
+import os, glob, serial, time, sys
+from matplotlib import pyplot as plt
 from numpy.polynomial.polynomial import polyval
-import os, glob, serial, time
-from pylab import *
+import numpy as np
 
 
 class MicroSpec(object):
@@ -13,10 +14,10 @@ class MicroSpec(object):
         self._ser.write(b"SPEC.READ?\n")
 
         sdata = self._ser.readline()
-        sdata = array([int(p) for p in sdata.split(b",")])
+        sdata = np.array([int(p) for p in sdata.split(b",")])
         self._ser.write(b"SPEC.TIMING?\n")
         tdata = self._ser.readline()
-        tdata = array([int(p) for p in tdata.split(b",")])
+        tdata = np.array([int(p) for p in tdata.split(b",")])
         return (sdata, tdata)
     def start_source(self, source):
         self._ser.write("{source}.START\n".format(source=source.upper()).encode('utf-8'))
@@ -55,11 +56,10 @@ if __name__ == "__main__":
 
     coefficients = [a0, b1, b2, b3, b4, b5]
 
-    frequency = polyval(linspace(1, 288, 288), coefficients)
-    frequency = linspace(1,288,288)
+    frequency = polyval(np.linspace(1, 288, 288), coefficients)
     
-    plot(frequency, sdata)
-    show()
+    plt.plot(frequency, sdata)
+    plt.show()
 
     with open(filename, 'w') as fp:
         for idx in range(len(frequency)):
