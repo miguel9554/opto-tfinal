@@ -6,8 +6,13 @@ import matplotlib.backends.tkagg as tkagg
 import tkinter as Tk
 from numpy.polynomial.polynomial import polyval
 import serial
+import os
 import numpy as np
 import read_spectrum
+
+delimiter = '\t'
+overwrite = 'No'
+data = []
 
 try:
     spec = read_spectrum.MicroSpec('COM4')
@@ -38,7 +43,8 @@ ax.grid()
 col = [[sg.Button('Leer', size=(10, 2), font='Helvetica 14')],
        [sg.Button('Laser', size=(10, 2), font='Helvetica 14')],
        [sg.Button('Led', size=(10, 2), font='Helvetica 14')],
-       [sg.Button('Exit', size=(10, 2), font='Helvetica 14')]]
+       [sg.Text('Nombre de archivo', size=(15, 2)), sg.InputText('name', key='filename')],
+       [sg.Button('Guardar', size=(10, 2), font='Helvetica 14')]]
 
 layout = [[sg.Text('Mini espectrometro', size=(40, 1), justification='center', font='Helvetica 20')],
           [sg.Canvas(size=(640, 480), key='canvas'), sg.Column(col)]]
@@ -81,5 +87,21 @@ while True:
         else:
             spec.stop_source(event.lower())
             source_active[event.lower()] = False
-    elif event == 'Exit' or event is None:
-        exit()
+    elif event == 'Guardar':
+        filename = values['filename']
+        if os.path.isfile(filename):
+            overwrite = sg.PopupYesNo('El archivo ya existe. Sobreescribir?')
+        if (os.path.isfile(filename) and overwrite == 'Yes') or not os.path.isfile(filename):
+            try:
+                fp = open(filename, 'w')
+                if len(data):
+                    for idx in range(len(frequency)):
+                        fp.write("{f}{d}{s}\n".format(f=frequency[idx], d=delimiter, s=data[idx]))
+                else:
+                    sg.Popup("Primero hay que realizar una medición")
+                fp.close()
+            except OSError as e:
+                if e.errno == 22:
+                    sg.Popup("Nombre de archivo invalido")
+                else:
+                    sg.Popup("Cancelar", e)
