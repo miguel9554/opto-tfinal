@@ -1,10 +1,22 @@
-from tkinter import *
 from random import randint
 import PySimpleGUI as sg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 from matplotlib.figure import Figure
 import matplotlib.backends.tkagg as tkagg
 import tkinter as Tk
+from numpy.polynomial.polynomial import polyval
+import numpy as np
+
+a0 = 3.140535950e2
+b1 = 2.683446321
+b2 = -1.085274073e-3
+b3 = -7.935339442e-6
+b4 = 9.280578717e-9
+b5 = 6.660903356e-12
+
+coefficients = [a0, b1, b2, b3, b4, b5]
+
+frequency = polyval(np.linspace(1, 288, 288), coefficients)
 
 fig = Figure()
 
@@ -13,12 +25,13 @@ ax.set_xlabel("X axis")
 ax.set_ylabel("Y axis")
 ax.grid()
 
+col = [[sg.Button('Leer', size=(10, 2), font='Helvetica 14')],
+       [sg.Button('Laser', size=(10, 2), font='Helvetica 14')],
+       [sg.Button('Led', size=(10, 2), font='Helvetica 14')],
+       [sg.Button('Exit', size=(10, 2), font='Helvetica 14')]]
+
 layout = [[sg.Text('Animated Matplotlib', size=(40, 1), justification='center', font='Helvetica 20')],
-          [sg.Canvas(size=(640, 480), key='canvas')],
-          [sg.Button('Leer', size=(10, 2), font='Helvetica 14'),
-          sg.Button('Laser', size=(10, 2), font='Helvetica 14'),
-          sg.Button('Led', size=(10, 2), font='Helvetica 14'),
-          sg.Button('Exit', size=(10, 2), font='Helvetica 14')]]
+          [sg.Canvas(size=(640, 480), key='canvas'), sg.Column(col)]]
 
 # create the window and show it without the plot
 
@@ -31,27 +44,31 @@ canvas_elem = window.Element('canvas')
 graph = FigureCanvasTkAgg(fig, master=canvas_elem.TKCanvas)
 canvas = canvas_elem.TKCanvas
 
-dpts = [randint(0, 10) for x in range(100)]
-# Our event loop
-for i in range(len(dpts)):
+while True:
+
     event, values = window.Read(timeout=20)
-    if event == 'Exit' or event is None:
-        exit(69)
+    if event == 'Leer':
+        ax.cla()
+        ax.grid()
+
+        data = read_data()
+        ax.plot(frequency, data, color='purple')
+        graph.draw()
+        figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
+        figure_w, figure_h = int(figure_w), int(figure_h)
+        photo = Tk.PhotoImage(master=canvas, width=figure_w, height=figure_h)
+
+        canvas.create_image(640 / 2, 480 / 2, image=photo)
+
+        figure_canvas_agg = FigureCanvasAgg(fig)
+        figure_canvas_agg.draw()
+
+        tkagg.blit(photo, figure_canvas_agg.get_renderer()._renderer, colormode=2)
+    elif event == 'Laser':
+        toggle('laser')
+    elif event == 'Led':
+        toggle('led')
+    elif event == 'Exit':
+        exit()
     else:
-        print(event)
-
-    ax.cla()
-    ax.grid()
-
-    ax.plot(range(20), dpts[i:i + 20], color='purple')
-    graph.draw()
-    figure_x, figure_y, figure_w, figure_h = fig.bbox.bounds
-    figure_w, figure_h = int(figure_w), int(figure_h)
-    photo = Tk.PhotoImage(master=canvas, width=figure_w, height=figure_h)
-
-    canvas.create_image(640 / 2, 480 / 2, image=photo)
-
-    figure_canvas_agg = FigureCanvasAgg(fig)
-    figure_canvas_agg.draw()
-
-    tkagg.blit(photo, figure_canvas_agg.get_renderer()._renderer, colormode=2)
+        exit('ERROR: evento desconocido')

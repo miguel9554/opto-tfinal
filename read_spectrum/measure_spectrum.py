@@ -1,5 +1,7 @@
-import os, glob, serial, time
-from pylab import *
+# -*- coding: utf-8 -*-
+import os, glob, serial, time, argparse
+from numpy.polynomial.polynomial import polyval
+import numpy as np
 
 
 class MicroSpec(object):
@@ -25,26 +27,43 @@ class MicroSpec(object):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) not in [2,3]:
-        exit('cantidad de argumentos invalida')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename', type=str, help='Nombre del archivo de salida')
+    parser.add_argument('source', type=str.lower, choices=['laser', 'led', 'ext'], help='Fuente a utilizar. Laser, led o nada para una fuente externa')
+    args = parser.parse_args()
+    
+    delimiter = '\t'
+    filename = args.filename
+    source = args.source
 
-    delimiter='\t'
-    filename = sys.argv[1]
-    ext_source = sys.argv[2] if len(sys.argv) == 3 and sys.argv[2].lower() in ['laser','led'] else None
-    spec = MicroSpec('/dev/ttyACM0')
+    try:
+        spec = MicroSpec('/dev/ttyACM0')
+    except serial.SerialException:
+        exit('Error: el puerto elegido es invalido')
     print('inicializando...')
     time.sleep(1)   # esperamos a que se inicialize
     icc = spec.set_integration_time(1e-6)
-    if ext_source:
-        spec.start_source(ext_source)
+    if source != 'ext':
+        spec.start_source(source)
         time.sleep(2)   # le damos tiempo a la luz
     print('midiendo...')
     sdata, tdata = spec.read()
     time.sleep(1)
-    if ext_source:
-        spec.stop_source(ext_source)
+    if source != 'ext':
+        spec.stop_source(source)
 
-    frequency = linspace(340,850, len(sdata))
+    # calculamos la relación pixel-lambda
+    a0 = 3.140535950e2
+    b1 = 2.683446321
+    b2 = -1.085274073e-3
+    b3 = -7.935339442e-6
+    b4 = 9.280578717e-9
+    b5 = 6.660903356e-12
+
+    coefficients = [a0, b1, b2, b3, b4, b5]
+
+    frequency = polyval(np.linspace(1, 288, 288), coefficients)
+
     plot(frequency, sdata)
     show()
 
