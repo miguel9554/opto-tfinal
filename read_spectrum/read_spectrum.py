@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import serial, time, argparse
+import serial
+import time
+import argparse
 from matplotlib import pyplot as plt
 from numpy.polynomial.polynomial import polyval
 import numpy as np
@@ -8,6 +10,7 @@ import numpy as np
 class MicroSpec(object):
     def __init__(self, port):
         self._ser = serial.Serial(port, baudrate=115200, timeout=1)
+        time.sleep(1)  # esperamos a que se inicialize
 
     def set_integration_time(self, seconds):
         cmd = "SPEC.INTEG %0.6f\n" % seconds
@@ -33,7 +36,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', type=str, help='Nombre del archivo de salida')
-    parser.add_argument('source', type=str.lower, choices=['laser', 'led', 'ext'], help='Fuente a utilizar. Laser, led o nada para una fuente externa')
+    parser.add_argument('source', type=str.lower, choices=['laser', 'led', 'ext'], help='Fuente a utilizar. Laser, led o ext para una fuente externa')
     args = parser.parse_args()
     
     delimiter = '\t'
@@ -41,11 +44,10 @@ if __name__ == "__main__":
     source = args.source
 
     try:
-        spec = MicroSpec('/dev/ttyACM0')
+        spec = MicroSpec('COM4')
     except serial.SerialException:
         exit('Error: el puerto elegido es invalido')
-    print('inicializando...')
-    time.sleep(1)   # esperamos a que se inicialize
+
     spec.set_integration_time(1e-6)
     if source != 'ext':
         spec.start_source(source)
@@ -56,21 +58,22 @@ if __name__ == "__main__":
 
     if source != 'ext':
         spec.stop_source(source)
-        # coefficients
-        a0 = 3.140535950e2
-        b1 = 2.683446321
-        b2 = -1.085274073e-3
-        b3 = -7.935339442e-6
-        b4 = 9.280578717e-9
-        b5 = 6.660903356e-12
 
-        coefficients = [a0, b1, b2, b3, b4, b5]
+    # coefficients
+    a0 = 3.140535950e2
+    b1 = 2.683446321
+    b2 = -1.085274073e-3
+    b3 = -7.935339442e-6
+    b4 = 9.280578717e-9
+    b5 = 6.660903356e-12
 
-        frequency = polyval(np.linspace(1, 288, 288), coefficients)
+    coefficients = [a0, b1, b2, b3, b4, b5]
 
-        plt.plot(frequency, sdata)
-        plt.show()
+    frequency = polyval(np.linspace(1, 288, 288), coefficients)
 
-        with open(filename, 'w') as fp:
-            for idx in range(len(frequency)):
-                fp.write("{f}{d}{s}\n".format(f=frequency[idx], d=delimiter, s=sdata[idx]))
+    plt.plot(frequency, sdata)
+    plt.show()
+
+    with open(filename, 'w') as fp:
+        for idx in range(len(frequency)):
+            fp.write("{f}{d}{s}\n".format(f=frequency[idx], d=delimiter, s=sdata[idx]))
